@@ -20,6 +20,6 @@ class ResourceCreated(pydantic.BaseModel):
     )
 
     def __init__(self, **kwargs):
-        if 'identifier' not in kwargs:
+        if len(kwargs) == 0:
             kwargs['identifier'] = cuid.cuid()
         super().__init__(**kwargs)

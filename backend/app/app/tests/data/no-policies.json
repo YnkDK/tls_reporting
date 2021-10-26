@@ -1,0 +1,10 @@
+{
+  "organization-name": "Company-X",
+  "date-range": {
+    "start-datetime": "2016-04-01T00:00:00Z",
+    "end-datetime": "2016-04-01T23:59:59Z"
+  },
+  "contact-info": "sts-reporting@company-x.example",
+  "report-id": "5065427c-23d3-47ca-b6e0-946ea0e8c4be",
+  "policies": []
+}
