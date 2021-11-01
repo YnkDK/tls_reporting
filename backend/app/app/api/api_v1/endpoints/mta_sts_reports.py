@@ -5,6 +5,7 @@ from urllib.parse import urljoin
 
 from app.core import http_headers, exceptions
 from app.core.exceptions import JsonError
+from app.core.mta_sts import MtaSts
 from app.models import IDENTIFIER_INFORMATION
 from app.models.http_exception import HttpException
 from app.models.mta_sts_report import MtaStsReport
@@ -84,7 +85,9 @@ async def create_mta_sts_report(
     additional information field containing a URI for recipients to review further information on a failure type.
 
     Processes a new MTA-STS report in either plain text or encoded in gz format."""
-    result = await mta_sts.create_mta_sts_report(report)
+    mta_sts_report = await MtaSts.parse(report)
+
+    result = await mta_sts.create_mta_sts_report(mta_sts_report)
 
     response.headers['Location'] = urljoin(str(request.url) + '/', result.identifier)
     return result
