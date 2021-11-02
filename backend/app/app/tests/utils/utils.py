@@ -2,7 +2,7 @@ import os
 from typing import Tuple
 
 import requests
-from app.core import config
+from app.core.config import settings
 
 OPERATION_ID_ENDPOINTS = dict()
 
@@ -17,7 +17,7 @@ def get_test_data_path(filename: str = None) -> str:
 
 def init_operation_id_endpoints():
     """Caches the mapping between operation ids and endpoint/request method based on the the OpenAPI definition."""
-    server_api = config.SERVER_NAME
+    server_api = settings.SERVER_NAME
     open_api = requests.get(f"{server_api}/openapi.json").json()
 
     for path in open_api["paths"]:

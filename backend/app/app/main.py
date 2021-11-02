@@ -1,7 +1,7 @@
 import os
 import sys
 
-from app.core import config
+from app.core.config import settings
 from app.core.exceptions import InternalServerError, TLSReportingExceptionBase
 from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
@@ -17,7 +17,9 @@ if not os.path.dirname(os.path.dirname(os.path.realpath(__file__))) in sys.path:
 from api.api_v1.api import api_v1_router
 from fastapi import FastAPI
 
-app = FastAPI(title=config.APPLICATION_NAME, description=config.APPLICATION_DESCRIPTION)
+app = FastAPI(
+    title=settings.APPLICATION_NAME, description=settings.APPLICATION_DESCRIPTION
+)
 
 app.include_router(api_v1_router)
 
