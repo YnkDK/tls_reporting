@@ -1,70 +1,72 @@
-import starlette.datastructures
-
-from fastapi import APIRouter, UploadFile, File, status, Response, Request, Path
 from urllib.parse import urljoin
 
-from app.core import http_headers, exceptions
-from app.core.exceptions import JsonError
+from app.core import exceptions, http_headers
 from app.core.mta_sts import MtaSts
+from app.crud import mta_sts
 from app.models import IDENTIFIER_INFORMATION
 from app.models.http_exception import HttpException
 from app.models.mta_sts_report import MtaStsReport
 from app.models.resource_created import ResourceCreated
-from app.crud import mta_sts
+from fastapi import APIRouter, File, Path, Request, Response, UploadFile, status
 
 router = APIRouter()
 
 
 @router.post(
-    '/mta-sts',
-    operation_id='create_mta_sts_report',
+    "/mta-sts",
+    operation_id="create_mta_sts_report",
     status_code=status.HTTP_201_CREATED,
     response_model=ResourceCreated,
-    response_description='The report has been successfully processed and a new entity has been created.',
+    response_description="The report has been successfully processed and a new entity has been created.",
     responses={
         status.HTTP_201_CREATED: {
-            'headers': {
+            "headers": {
                 http_headers.LOCATION: {
-                    'description': 'The location of the newly created resource.',
-                    'schema': {'type': 'string'}}
-            },
-            'content': {
-                'application/json': {
-                    'examples': ResourceCreated.openapi_examples()
+                    "description": "The location of the newly created resource.",
+                    "schema": {"type": "string"},
                 }
             },
-            'links': {
-                'Get MTA-STS Report': {
-                    'operationId': 'get_mta_sts_report',
-                    'parameters': {
-                        'identifier': '$response.body#/identifier',
+            "content": {
+                "application/json": {"examples": ResourceCreated.openapi_examples()}
+            },
+            "links": {
+                "Get MTA-STS Report": {
+                    "operationId": "get_mta_sts_report",
+                    "parameters": {
+                        "identifier": "$response.body#/identifier",
                     },
-                    'description': 'The `identifier` value returned in the response can be used as the `identifier`'
-                                   ' parameter in `GET /mta-sts/{identifier}`'
+                    "description": "The `identifier` value returned in the response can be used as the `identifier`"
+                    " parameter in `GET /mta-sts/{identifier}`",
                 }
-            }
+            },
         },
         status.HTTP_422_UNPROCESSABLE_ENTITY: {
-            'model': HttpException,
-            'description': 'The report could not be processed.',
-            'content': {
-                'application/json': {
-                    'examples': exceptions.openapi_examples(
-                        frozenset({exceptions.JsonError.ERROR_CODE, exceptions.GzipError.ERROR_CODE})
+            "model": HttpException,
+            "description": "The report could not be processed.",
+            "content": {
+                "application/json": {
+                    "examples": exceptions.openapi_examples(
+                        frozenset(
+                            {
+                                exceptions.JsonError.ERROR_CODE,
+                                exceptions.GzipError.ERROR_CODE,
+                            }
+                        )
                     )
                 }
-            }
-        }
-    }
+            },
+        },
+    },
 )
 async def create_mta_sts_report(
-        response: Response,
-        request: Request,
-        report: UploadFile = File(
-            ...,
-            title='The MTA-STS report to be handled',
-            description='Plaintext file encoded in the Internet JSON (I-JSON) format (might be gzipped)'
-        )):
+    response: Response,
+    request: Request,
+    report: UploadFile = File(
+        ...,
+        title="The MTA-STS report to be handled",
+        description="Plaintext file encoded in the Internet JSON (I-JSON) format (might be gzipped)",
+    ),
+):
     """The report is composed as a plaintext file encoded in the Internet JSON (I-JSON) format [RFC7493].
 
     Aggregate reports contain the following fields:
@@ -89,32 +91,28 @@ async def create_mta_sts_report(
 
     result = await mta_sts.create_mta_sts_report(mta_sts_report)
 
-    response.headers['Location'] = urljoin(str(request.url) + '/', result.identifier)
+    response.headers["Location"] = urljoin(str(request.url) + "/", result.identifier)
     return result
 
 
 @router.get(
-    '/mta-sts/{identifier}',
-    operation_id='get_mta_sts_report',
+    "/mta-sts/{identifier}",
+    operation_id="get_mta_sts_report",
     response_model=MtaStsReport,
     status_code=status.HTTP_200_OK,
     responses={
         status.HTTP_404_NOT_FOUND: {
-            'model': HttpException,
-            'content': {
-                'application/json': {
-                    'examples': exceptions.openapi_examples(frozenset({exceptions.ResourceNotFound.ERROR_CODE}))
+            "model": HttpException,
+            "content": {
+                "application/json": {
+                    "examples": exceptions.openapi_examples(
+                        frozenset({exceptions.ResourceNotFound.ERROR_CODE})
+                    )
                 }
-            }
+            },
         }
-    }
+    },
 )
-async def get_mta_sts_report(
-        identifier: str = Path(
-            ...,
-            **IDENTIFIER_INFORMATION
-        )
-):
-    """Retrieves a given MTA-STS report.
-    """
+async def get_mta_sts_report(identifier: str = Path(..., **IDENTIFIER_INFORMATION)):
+    """Retrieves a given MTA-STS report."""
     raise exceptions.ResourceNotFound(NotImplementedError(identifier))

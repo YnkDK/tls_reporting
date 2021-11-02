@@ -1,18 +1,17 @@
 import gzip
 import io
 import json
-from typing import Union, BinaryIO
-from fastapi import UploadFile
-from pydantic import ValidationError
 
 from app.core.exceptions import GzipError, JsonError
 from app.models.mta_sts_report import MtaStsReport
+from fastapi import UploadFile
+from pydantic import ValidationError
 
 
 class MtaSts:
 
     # The magic bytes for gz or tar.gz is 1f8b
-    MAGIC_BYTE_GZ = b'\x1f\x8b'
+    MAGIC_BYTE_GZ = b"\x1f\x8b"
 
     @staticmethod
     def unzip(buffer: bytes) -> bytes:
@@ -23,9 +22,8 @@ class MtaSts:
             raise GzipError(e)
 
     @classmethod
-    async def parse(cls, raw_content: Union[BinaryIO, UploadFile]) -> MtaStsReport:
+    async def parse(cls, raw_content: UploadFile) -> MtaStsReport:
         buffer = await raw_content.read()
-
         if buffer.startswith(cls.MAGIC_BYTE_GZ):
             buffer = cls.unzip(buffer)
 

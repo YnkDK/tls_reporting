@@ -1,46 +1,54 @@
 import os
+from typing import Tuple
+
 import requests
-
 from app.core import config
-
 
 OPERATION_ID_ENDPOINTS = dict()
 
 
 def get_test_data_path(filename: str = None) -> str:
     dir_path = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
-    data_dir = os.path.join(dir_path, 'data')
+    data_dir = os.path.join(dir_path, "data")
     if filename:
         return os.path.join(data_dir, filename)
     return data_dir
 
 
 def init_operation_id_endpoints():
-    """Caches the mapping between operation ids and endpoint/request method based on the the OpenAPI definition.
-    """
+    """Caches the mapping between operation ids and endpoint/request method based on the the OpenAPI definition."""
     server_api = config.SERVER_NAME
-    open_api = requests.get(f'{server_api}/openapi.json').json()
+    open_api = requests.get(f"{server_api}/openapi.json").json()
 
-    for path in open_api['paths']:
-        for method in open_api['paths'][path]:
-            operation_id = open_api['paths'][path][method]['operationId']
-            OPERATION_ID_ENDPOINTS[operation_id] = (f'{server_api}{path}', method)
+    for path in open_api["paths"]:
+        for method in open_api["paths"][path]:
+            operation_id = open_api["paths"][path][method]["operationId"]
+            OPERATION_ID_ENDPOINTS[operation_id] = (f"{server_api}{path}", method)
 
 
-def get_endpoint(operation_id: str) -> (str, str):
-    """Gets endpoint and method type based on the operation id as found in the OpenAPI definition
-
-    """
+def get_endpoint(operation_id: str) -> Tuple[str, str]:
+    """Gets endpoint and method type based on the operation id as found in the OpenAPI definition"""
     if len(OPERATION_ID_ENDPOINTS) == 0:
         init_operation_id_endpoints()
     return OPERATION_ID_ENDPOINTS[operation_id]
 
 
 def send_request(
-        operation_id: str,
-        params=None, data=None, headers=None, cookies=None, files=None,
-        auth=None, timeout=None, allow_redirects=True, proxies=None,
-        hooks=None, stream=None, verify=True, cert=None, json=None
+    operation_id: str,
+    params=None,
+    data=None,
+    headers=None,
+    cookies=None,
+    files=None,
+    auth=None,
+    timeout=None,
+    allow_redirects=True,
+    proxies=None,
+    hooks=None,
+    stream=None,
+    verify=True,
+    cert=None,
+    json=None,
 ) -> requests.Response:
     """Sends a request to the endpoint identified by the operation id as found in the OpenAPI definition.
 
@@ -77,6 +85,42 @@ def send_request(
     :param cert: (optional) if String, path to ssl client cert file (.pem). If Tuple, ('cert', 'key') pair.
     """
     endpoint, method = get_endpoint(operation_id=operation_id)
-    return requests.request(method=method, url=endpoint, params=params, data=data, headers=headers, cookies=cookies,
-                            files=files, auth=auth, timeout=timeout, allow_redirects=allow_redirects, proxies=proxies,
-                            hooks=hooks, stream=stream, verify=verify, cert=cert, json=json)
+    return requests.request(
+        method=method,
+        url=endpoint,
+        params=params,
+        data=data,
+        headers=headers,
+        cookies=cookies,
+        files=files,
+        auth=auth,
+        timeout=timeout,
+        allow_redirects=allow_redirects,
+        proxies=proxies,
+        hooks=hooks,
+        stream=stream,
+        verify=verify,
+        cert=cert,
+        json=json,
+    )
+
+
+def pydandict_example(schema: dict, definitions=None):
+    if definitions is None:
+        definitions = schema["definitions"]
+    example = dict()
+    if schema["type"] == "object":
+        for property_name, value in schema["properties"].items():
+            if "example" in value:
+                example[property_name] = value["example"]
+            elif "allOf" in value:
+                definition = value["allOf"][0]["$ref"].split("/")[-1]
+                example[property_name] = pydandict_example(
+                    definitions[definition], definitions
+                )
+            elif "type" in value and value["type"] == "array":
+                definition = value["items"]["$ref"].split("/")[-1]
+                example[property_name] = [
+                    pydandict_example(definitions[definition], definitions)
+                ]
+    return example
