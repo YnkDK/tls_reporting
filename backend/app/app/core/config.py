@@ -1,8 +1,10 @@
-from pydantic import BaseSettings, PostgresDsn, validator
+from typing import Optional
+
+from pydantic import AnyUrl, BaseSettings, validator
 
 
 class Settings(BaseSettings):
-    SERVER_NAME: str
+    SERVER_NAME: str = ""
 
     APPLICATION_NAME: str = "TLS Reporting"
     APPLICATION_DESCRIPTION: str = """A number of protocols exist for establishing encrypted channels between SMTP
@@ -36,7 +38,7 @@ Text from https://datatracker.ietf.org/doc/html/rfc8460
     # POSTGRES_USER: str
     # POSTGRES_PASSWORD: str
     # POSTGRES_DB: str
-    # SQLALCHEMY_DATABASE_URI: Optional[PostgresDsn] = None
+    SQLALCHEMY_DATABASE_URI: Optional[str] = "sqlite:///../../../sql_app.db"
     #
     # @classmethod
     # @validator("SQLALCHEMY_DATABASE_URI", pre=True)

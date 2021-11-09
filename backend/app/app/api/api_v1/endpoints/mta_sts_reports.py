@@ -1,13 +1,24 @@
 from urllib.parse import urljoin
 
+from app.api import deps
 from app.core import exceptions, http_headers
 from app.core.mta_sts import MtaSts
 from app.crud import mta_sts
-from app.models import IDENTIFIER_INFORMATION
-from app.models.http_exception import HttpException
-from app.models.mta_sts_report import MtaStsReport
-from app.models.resource_created import ResourceCreated
-from fastapi import APIRouter, File, Path, Request, Response, UploadFile, status
+from app.schemas import IDENTIFIER_INFORMATION
+from app.schemas.http_exception import HttpException
+from app.schemas.mta_sts_report import MtaStsReport
+from app.schemas.resource_created import ResourceCreated
+from fastapi import (
+    APIRouter,
+    Depends,
+    File,
+    Path,
+    Request,
+    Response,
+    UploadFile,
+    status,
+)
+from sqlalchemy.orm import Session
 
 router = APIRouter()
 
@@ -50,6 +61,7 @@ router = APIRouter()
                             {
                                 exceptions.JsonError.ERROR_CODE,
                                 exceptions.GzipError.ERROR_CODE,
+                                exceptions.ResourceAlreadyExists.ERROR_CODE,
                             }
                         )
                     )
@@ -61,6 +73,7 @@ router = APIRouter()
 async def create_mta_sts_report(
     response: Response,
     request: Request,
+    db: Session = Depends(deps.get_db),
     report: UploadFile = File(
         ...,
         title="The MTA-STS report to be handled",
@@ -89,7 +102,13 @@ async def create_mta_sts_report(
     Processes a new MTA-STS report in either plain text or encoded in gz format."""
     mta_sts_report = await MtaSts.parse(report)
 
-    result = await mta_sts.create_mta_sts_report(mta_sts_report)
+    try:
+        result = await mta_sts.create_mta_sts_report(
+            db=db, mta_sts_report=mta_sts_report
+        )
+    except Exception:
+        db.rollback()
+        raise
 
     response.headers["Location"] = urljoin(str(request.url) + "/", result.identifier)
     return result

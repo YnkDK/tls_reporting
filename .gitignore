@@ -128,5 +128,8 @@ dmypy.json
 # Pyre type checker
 .pyre/
 
+# SQL Lite
+*.db
+
 # PyCharm
 .idea/

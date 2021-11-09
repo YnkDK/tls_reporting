@@ -3,9 +3,9 @@ import json
 
 import pytest
 from app.core.exceptions import GzipError, JsonError
-from app.models.http_exception import HttpException
-from app.models.mta_sts_report import MtaStsReport
-from app.models.resource_created import ResourceCreated
+from app.schemas.http_exception import HttpException
+from app.schemas.mta_sts_report import MtaStsReport
+from app.schemas.resource_created import ResourceCreated
 from app.tests.utils.utils import (
     get_endpoint,
     get_test_data_path,
@@ -27,7 +27,7 @@ def test_create_mta_sts_report_success(test_file_name: str):
         "create_mta_sts_report", files={"report": open(test_file_path, "rb")}
     )
 
-    assert response.status_code == status.HTTP_201_CREATED
+    assert response.status_code == status.HTTP_201_CREATED, response.json()
     assert response.headers.get("content-type") == "application/json"
     # pydantic validates the response format
     resource_created = ResourceCreated(**response.json())

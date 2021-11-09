@@ -3,7 +3,7 @@ import io
 import json
 
 from app.core.exceptions import GzipError, JsonError
-from app.models.mta_sts_report import MtaStsReport
+from app.schemas.mta_sts_report import MtaStsReport
 from fastapi import UploadFile
 from pydantic import ValidationError
 

@@ -1,7 +1,7 @@
 from typing import List
 
-from app.models.mta_sts_report.mta_sts_datetime import MtaStsDatetime
-from app.models.mta_sts_report.mta_sts_policy import PolicyContainer
+from app.schemas.mta_sts_report.mta_sts_datetime import MtaStsDatetime
+from app.schemas.mta_sts_report.mta_sts_policy import PolicyContainer
 from pydantic import BaseModel, EmailStr, Field
 
 

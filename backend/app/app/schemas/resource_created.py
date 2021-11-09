@@ -1,6 +1,6 @@
 import cuid
 import pydantic
-from app.models import IDENTIFIER_INFORMATION
+from app.schemas import IDENTIFIER_INFORMATION
 
 
 class ResourceCreated(pydantic.BaseModel):

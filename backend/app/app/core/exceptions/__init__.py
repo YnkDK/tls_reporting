@@ -40,6 +40,21 @@ class ResourceNotFound(TLSReportingExceptionBase):
         )
 
 
+class ResourceAlreadyExists(TLSReportingExceptionBase):
+    STATUS_CODE = status.HTTP_409_CONFLICT
+    MESSAGE = "Indicates that the resource already exists. See additional field for the identifier of the resource."
+    ERROR_CODE = "409-01"
+
+    def __init__(self, original_exception: Exception, existing_identifier: str):
+        super().__init__(
+            original_exception=original_exception,
+            message=ResourceAlreadyExists.MESSAGE,
+            error_code=ResourceAlreadyExists.ERROR_CODE,
+            http_status_code=ResourceAlreadyExists.STATUS_CODE,
+            additional=[existing_identifier],
+        )
+
+
 class GzipError(TLSReportingExceptionBase):
     STATUS_CODE = status.HTTP_422_UNPROCESSABLE_ENTITY
     MESSAGE = "An error occurred during encoding/decoding the content to/from Gzip."
