@@ -51,6 +51,21 @@ router = APIRouter()
                 }
             },
         },
+        status.HTTP_409_CONFLICT: {
+            "model": HttpException,
+            "description": "The report already exists.",
+            "content": {
+                "application/json": {
+                    "examples": exceptions.openapi_examples(
+                        frozenset(
+                            {
+                                exceptions.ResourceAlreadyExists.ERROR_CODE,
+                            }
+                        )
+                    )
+                }
+            },
+        },
         status.HTTP_422_UNPROCESSABLE_ENTITY: {
             "model": HttpException,
             "description": "The report could not be processed.",
@@ -61,7 +76,6 @@ router = APIRouter()
                             {
                                 exceptions.JsonError.ERROR_CODE,
                                 exceptions.GzipError.ERROR_CODE,
-                                exceptions.ResourceAlreadyExists.ERROR_CODE,
                             }
                         )
                     )

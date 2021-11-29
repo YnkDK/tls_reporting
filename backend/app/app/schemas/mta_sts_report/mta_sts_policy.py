@@ -1,15 +1,22 @@
+from enum import Enum
 from typing import List
 
 from pydantic import AnyUrl, BaseModel, Field, IPvAnyAddress
 
 
+class PolicyTypes(Enum):
+    TLSA = "tlsa"
+    STS = "sts"
+    NO_POLICY_FOUND = "no-policy-found"
+
+
 class Policy(BaseModel):
-    policy_type: str = Field(
+    policy_type: PolicyTypes = Field(
         ...,
         description="The type of policy that was applied by the sending domain. Presently, the only three valid "
         'choices are "tlsa", "sts", and the literal string "no-policy-found".',
         alias="policy-type",
-        example="sts",
+        example=PolicyTypes.STS,
     )
     policy_string: List[str] = Field(
         ...,
@@ -30,6 +37,7 @@ class Policy(BaseModel):
         " [RFC3492] and not the U-labels.",
         alias="policy-domain",
         example="company-y.example",
+        max_length=255,
     )
     mx_host: str = Field(
         None,
@@ -37,6 +45,7 @@ class Policy(BaseModel):
         " policy.",
         alias="mx-host",
         example="*.mail.company-y.example",
+        max_length=450,
     )
 
 

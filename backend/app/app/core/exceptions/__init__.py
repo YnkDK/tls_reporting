@@ -1,5 +1,6 @@
 from typing import Any, List, Optional
 
+from app.schemas import IDENTIFIER_INFORMATION
 from fastapi import HTTPException, status
 from pydantic import ValidationError
 
@@ -8,6 +9,7 @@ class TLSReportingExceptionBase(HTTPException):
     STATUS_CODE = 0
     MESSAGE = ""
     ERROR_CODE = ""
+    _ADDITIONAL_EXAMPLE: Optional[List[Any]] = None
 
     def __init__(
         self,
@@ -24,6 +26,10 @@ class TLSReportingExceptionBase(HTTPException):
 
         super().__init__(status_code=http_status_code, detail=detail)
         self.original_exception = original_exception
+
+    @classmethod
+    def additional_example(cls) -> Optional[List[Any]]:
+        return cls._ADDITIONAL_EXAMPLE
 
 
 class ResourceNotFound(TLSReportingExceptionBase):
@@ -44,6 +50,7 @@ class ResourceAlreadyExists(TLSReportingExceptionBase):
     STATUS_CODE = status.HTTP_409_CONFLICT
     MESSAGE = "Indicates that the resource already exists. See additional field for the identifier of the resource."
     ERROR_CODE = "409-01"
+    _ADDITIONAL_EXAMPLE = [IDENTIFIER_INFORMATION.get("example")]
 
     def __init__(self, original_exception: Exception, existing_identifier: str):
         super().__init__(
@@ -73,16 +80,29 @@ class JsonError(TLSReportingExceptionBase):
     STATUS_CODE = status.HTTP_422_UNPROCESSABLE_ENTITY
     MESSAGE = "An error occurred while parsing the JSON content, e.g., not well formatted or incorrect types."
     ERROR_CODE = "422-02"
+    _ADDITIONAL_EXAMPLE = [
+        {
+            "loc": ["policies", 0, "policy", "policy-type"],
+            "msg": "field required",
+            "type": "value_error.missing",
+        },
+        {
+            "loc": ["policies", 0, "policy", "policy-string"],
+            "msg": "field required",
+            "type": "value_error.missing",
+        },
+    ]
 
     def __init__(self, original_exception: Exception):
+        additional = None
+        if isinstance(original_exception, ValidationError):
+            additional = original_exception.errors()
         super().__init__(
             original_exception=original_exception,
             message=JsonError.MESSAGE,
             error_code=JsonError.ERROR_CODE,
             http_status_code=JsonError.STATUS_CODE,
-            additional=original_exception.errors()
-            if isinstance(original_exception, ValidationError)
-            else None,
+            additional=additional,
         )
 
 
@@ -114,6 +134,11 @@ def openapi_examples(error_codes: frozenset = None) -> dict:
                     "detail": {"code": subclass.ERROR_CODE, "message": subclass.MESSAGE}
                 }
             }
+            additional_example = subclass.additional_example()
+            if additional_example is not None:
+                all_exceptions[subclass.__name__]["value"]["detail"][
+                    "additional"
+                ] = additional_example
 
     if len(all_exceptions) == 0:
         raise RuntimeError("No OpenAPI examples found!")
@@ -121,4 +146,5 @@ def openapi_examples(error_codes: frozenset = None) -> dict:
         raise RuntimeError(
             'Not all exceptions in "error_codes" could be matched with an error!'
         )
+    print(all_exceptions)
     return all_exceptions
